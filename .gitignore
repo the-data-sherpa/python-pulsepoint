@@ -5,6 +5,7 @@ config.py
 *.log
 *.log.*
 pulsepoint_metrics.log*
+waze_feed.json
 
 # Python
 __pycache__/
