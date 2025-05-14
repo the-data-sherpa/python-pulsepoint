@@ -1,5 +1,5 @@
 # API Endpoints
-SPLUNK_ENDPOINT = "YOUR_SPLUNK_HEC_ENDPOINT"  # Example: "https://your-splunk-instance:8088/services/collector"
+CRIBL_HEC_ENDPOINT = "YOUR_CRIBL_HEC_ENDPOINT"  # Example: "https://your-cribl-instance:8088/services/collector"
 PULSEPOINT_API = "https://web.pulsepoint.org/DB/giba.php"  # PulsePoint API endpoint
 
 # Agency Configuration
@@ -7,7 +7,7 @@ AGENCIES = [
     {
         "id": "YOUR_AGENCY_ID",  # Example: "EMS1234"
         "name": "YOUR_AGENCY_NAME",  # Example: "County EMS"
-        "splunk_token": "YOUR_SPLUNK_TOKEN"  # Example: "Splunk xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        "cribl_token": "YOUR_CRIBL_TOKEN"  # Example: "Cribl xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
     }
 ]
 
@@ -29,4 +29,4 @@ DEBUG_LOG_FORMAT = "%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(
 # Metrics Configuration
 METRICS_ENABLED = True  # Enable/disable metrics collection
 METRICS_LOG_FILE = "pulsepoint_metrics.log"  # Separate file for metrics
-METRICS_FORMAT = "%(asctime)s - %(message)s"  # Format for metrics logging 
+METRICS_FORMAT = "%(asctime)s - %(message)s" 

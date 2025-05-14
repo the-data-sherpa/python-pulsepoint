@@ -28,6 +28,11 @@
 - Valid Cribl Stream HEC tokens
 - Valid IFTTT webhook keys (if using social media integration)
 
+### Waze CCP Feed Generator
+- If you are a Waze for Cities Data (CCP) partner, you can generate a Waze-compliant incident feed.
+- No Google Maps API key or project is required.
+- See [Waze Data Feed Documentation](https://support.google.com/waze/partners/answer/6088691?hl=en) for feed requirements and onboarding.
+
 ## Installation
 
 ### 1. Clone the Repository

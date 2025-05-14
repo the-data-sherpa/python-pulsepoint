@@ -60,7 +60,7 @@ This system collects active incidents from the PulsePoint API, processes them, a
 
 1. Splunk HEC Endpoint:
    ```python
-   SPLUNK_ENDPOINT = "https://your-splunk-instance:8088/services/collector"
+   CRIBL_HEC_ENDPOINT = "https://your-splunk-instance:8088/services/collector"
    ```
 
 2. Agency Configuration:
@@ -69,7 +69,7 @@ This system collects active incidents from the PulsePoint API, processes them, a
        {
            "id": "EMS1234",  # Your agency ID
            "name": "County EMS",  # Your agency name
-           "splunk_token": "Splunk xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Your Splunk token
+           "cribl_token": "Splunk xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Your Splunk token
        }
    ]
    ```

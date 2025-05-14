@@ -1,0 +1,30 @@
+{
+  "alerts": [
+    {
+      "id": "2175531489",
+      "type": "ACCIDENT",
+      "location": {
+        "x": -80.866699,
+        "y": 35.444944
+      },
+      "pubMillis": 1747251457000,
+      "street": "16915 STATESVILLE RD, HUNTERSVILLE, NC",
+      "reportDescription": "Traffic collision reported by PulsePoint",
+      "confidence": 8,
+      "reliability": 7
+    },
+    {
+      "id": "2175515880",
+      "type": "ACCIDENT",
+      "location": {
+        "x": -80.829327,
+        "y": 35.273851
+      },
+      "pubMillis": 1747251457000,
+      "street": "20352 S I-85 HWY, CHARLOTTE, NC",
+      "reportDescription": "Traffic collision reported by PulsePoint",
+      "confidence": 8,
+      "reliability": 7
+    }
+  ]
+}
