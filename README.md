@@ -48,9 +48,9 @@ This system collects active incidents from the PulsePoint API, processes them, a
    ```
 
 4. Edit `config.py` with your settings:
-   - Set your Splunk HEC endpoint
+   - Set your Cribl HEC endpoint
    - Configure your agencies
-   - Add your Splunk tokens
+   - Add your Cribl tokens
    - Adjust timing settings if needed
    - Configure metrics and logging settings
 
@@ -58,9 +58,9 @@ This system collects active incidents from the PulsePoint API, processes them, a
 
 ### Required Settings
 
-1. Splunk HEC Endpoint:
+1. Cribl HEC Endpoint:
    ```python
-   CRIBL_HEC_ENDPOINT = "https://your-splunk-instance:8088/services/collector"
+   CRIBL_HEC_ENDPOINT = "https://your-Cribl-instance:8088/services/collector"
    ```
 
 2. Agency Configuration:
@@ -69,7 +69,7 @@ This system collects active incidents from the PulsePoint API, processes them, a
        {
            "id": "EMS1234",  # Your agency ID
            "name": "County EMS",  # Your agency name
-           "cribl_token": "Splunk xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Your Splunk token
+           "cribl_token": "Splunk xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # Your Cribl token
        }
    ]
    ```
@@ -118,7 +118,7 @@ The system collects comprehensive metrics including:
 - Thread count
 - Resource utilization
 
-### Splunk Metrics
+### Cribl Metrics
 - Post success rates
 - Payload sizes
 - Post duration
@@ -127,7 +127,7 @@ The system collects comprehensive metrics including:
 ## Security Notes
 
 1. Never commit `config.py` to version control
-2. Keep your Splunk tokens secure
+2. Keep your Cribl tokens secure
 3. Use environment variables for sensitive values in production
 4. Regularly rotate API keys and tokens
 5. Metrics logs may contain sensitive information - ensure proper access controls
