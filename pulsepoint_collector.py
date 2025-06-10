@@ -97,7 +97,7 @@ class PulsePointCollector:
         # Create and configure console handler
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(standard_formatter)
-        console_handler.setLevel(logging.INFO)  # Always show INFO and above in console
+        console_handler.setLevel(logging.ERROR)  # Only show ERROR and above in console
         root_logger.addHandler(console_handler)
 
         self.logger = logging.getLogger(__name__)
