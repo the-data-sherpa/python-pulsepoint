@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timezone
 import signal
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Literal
 from dataclasses import dataclass
 import base64
 import hashlib
@@ -26,20 +26,21 @@ from metrics_logger import (
 )
 from waze_feed_generator import generate_waze_feed
 
-# Headers for the new PulsePoint API
+# Headers for the new PulsePoint API - Updated to match working browser requests exactly
 PULSEPOINT_HEADERS = {
     "accept": "*/*",
     "accept-language": "en-US,en;q=0.9",
     "content-type": "application/json",
     "priority": "u=1, i",
-    "sec-ch-ua": '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
+    "sec-ch-ua": '"Chromium";v="137", "Not/A)Brand";v="24"',
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
+    "sec-ch-ua-platform": '"macOS"',
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-site",
     "Referer": "https://web.pulsepoint.org/",
-    "Referrer-Policy": "strict-origin-when-cross-origin"
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
 }
 
 @dataclass
@@ -68,6 +69,179 @@ class Metrics:
             "end_time": self.end_time.isoformat(),
             "success_rate": round((self.successful_posts / self.total_incidents * 100) if self.total_incidents > 0 else 0, 2)
         }
+
+# Call Type Categories - matching the TypeScript definitions
+CallTypeCategory = Literal[
+    'Aid', 'Aircraft', 'Alarm', 'Assist', 'Explosion', 'Fire', 'Hazard',
+    'Investigation', 'Lockout', 'Medical', 'Natural Disaster', 'Rescue',
+    'Vehicle', 'Wires', 'Other', 'Alert', 'Unknown'
+]
+
+@dataclass
+class CallType:
+    id: str
+    description: str
+    category: CallTypeCategory
+
+# Comprehensive call types list - matching the PulsePoint site exactly
+CALL_TYPES: List[CallType] = [
+    # Aid
+    CallType('AA', 'Auto Aid', 'Aid'),
+    CallType('MU', 'Mutual Aid', 'Aid'),
+    CallType('ST', 'Strike Team/Task Force', 'Aid'),
+    
+    # Aircraft
+    CallType('AC', 'Aircraft Crash', 'Aircraft'),
+    CallType('AE', 'Aircraft Emergency', 'Aircraft'),
+    CallType('AES', 'Aircraft Emergency Standby', 'Aircraft'),
+    CallType('LZ', 'Landing Zone', 'Aircraft'),
+    
+    # Alarm
+    CallType('AED', 'AED Alarm', 'Alarm'),
+    CallType('OA', 'Alarm', 'Alarm'),
+    CallType('CMA', 'Carbon Monoxide', 'Alarm'),
+    CallType('FA', 'Fire Alarm', 'Alarm'),
+    CallType('MA', 'Manual Alarm', 'Alarm'),
+    CallType('SD', 'Smoke Detector', 'Alarm'),
+    CallType('TRBL', 'Trouble Alarm', 'Alarm'),
+    CallType('WFA', 'Waterflow Alarm', 'Alarm'),
+    
+    # Assist
+    CallType('FL', 'Flooding', 'Assist'),
+    CallType('LR', 'Ladder Request', 'Assist'),
+    CallType('LA', 'Lift Assist', 'Assist'),
+    CallType('PA', 'Police Assist', 'Assist'),
+    CallType('PS', 'Public Service', 'Assist'),
+    CallType('SH', 'Sheared Hydrant', 'Assist'),
+    
+    # Explosion
+    CallType('EX', 'Explosion', 'Explosion'),
+    CallType('PE', 'Pipeline Emergency', 'Explosion'),
+    CallType('TE', 'Transformer Explosion', 'Explosion'),
+    
+    # Fire
+    CallType('AF', 'Appliance Fire', 'Fire'),
+    CallType('CHIM', 'Chimney Fire', 'Fire'),
+    CallType('CF', 'Commercial Fire', 'Fire'),
+    CallType('WSF', 'Confirmed Structure Fire', 'Fire'),
+    CallType('WVEG', 'Confirmed Vegetation Fire', 'Fire'),
+    CallType('CB', 'Controlled Burn/Prescribed Fire', 'Fire'),
+    CallType('ELF', 'Electrical Fire', 'Fire'),
+    CallType('EF', 'Extinguished Fire', 'Fire'),
+    CallType('FIRE', 'Fire', 'Fire'),
+    CallType('FULL', 'Full Assignment', 'Fire'),
+    CallType('IF', 'Illegal Fire', 'Fire'),
+    CallType('MF', 'Marine Fire', 'Fire'),
+    CallType('OF', 'Outside Fire', 'Fire'),
+    CallType('PF', 'Pole Fire', 'Fire'),
+    CallType('GF', 'Refuse/Garbage Fire', 'Fire'),
+    CallType('RF', 'Residential Fire', 'Fire'),
+    CallType('SF', 'Structure Fire', 'Fire'),
+    CallType('TF', 'Tank Fire', 'Fire'),
+    CallType('VEG', 'Vegetation Fire', 'Fire'),
+    CallType('VF', 'Vehicle Fire', 'Fire'),
+    CallType('WF', 'Confirmed Fire', 'Fire'),
+    CallType('WCF', 'Confirmed Commercial Fire', 'Fire'),
+    CallType('WRF', 'Confirmed Residential Fire', 'Fire'),
+    
+    # Hazard
+    CallType('BT', 'Bomb Threat', 'Hazard'),
+    CallType('EE', 'Electrical Emergency', 'Hazard'),
+    CallType('EM', 'Emergency', 'Hazard'),
+    CallType('ER', 'Emergency Response', 'Hazard'),
+    CallType('GAS', 'Gas Main', 'Hazard'),
+    CallType('HC', 'Hazardous Condition', 'Hazard'),
+    CallType('HMR', 'Hazardous Materials Response', 'Hazard'),
+    CallType('TD', 'Tree Down', 'Hazard'),
+    CallType('WE', 'Water Emergency', 'Hazard'),
+    
+    # Investigation
+    CallType('AI', 'Arson Investigation', 'Investigation'),
+    CallType('FWI', 'Fireworks Investigation', 'Investigation'),
+    CallType('HMI', 'Hazmat Investigation', 'Investigation'),
+    CallType('INV', 'Investigation', 'Investigation'),
+    CallType('OI', 'Odor Investigation', 'Investigation'),
+    CallType('SI', 'Smoke Investigation', 'Investigation'),
+    
+    # Lockout
+    CallType('CL', 'Commercial Lockout', 'Lockout'),
+    CallType('LO', 'Lockout', 'Lockout'),
+    CallType('RL', 'Residential Lockout', 'Lockout'),
+    CallType('VL', 'Vehicle Lockout', 'Lockout'),
+    
+    # Medical
+    CallType('CP', 'Community Paramedicine', 'Medical'),
+    CallType('IFT', 'Interfacility Transfer', 'Medical'),
+    CallType('ME', 'Medical Emergency', 'Medical'),
+    CallType('MCI', 'Multi Casualty', 'Medical'),
+    
+    # Natural Disaster
+    CallType('EQ', 'Earthquake', 'Natural Disaster'),
+    CallType('FLW', 'Flood Warning', 'Natural Disaster'),
+    CallType('TOW', 'Tornado Warning', 'Natural Disaster'),
+    CallType('TSW', 'Tsunami Warning', 'Natural Disaster'),
+    CallType('WX', 'Weather Incident', 'Natural Disaster'),
+    
+    # Rescue
+    CallType('AR', 'Animal Rescue', 'Rescue'),
+    CallType('CR', 'Cliff Rescue', 'Rescue'),
+    CallType('CSR', 'Confined Space Rescue', 'Rescue'),
+    CallType('ELR', 'Elevator Rescue', 'Rescue'),
+    CallType('EER', 'Elevator/Escalator Rescue', 'Rescue'),
+    CallType('IR', 'Ice Rescue', 'Rescue'),
+    CallType('IA', 'Industrial Accident', 'Rescue'),
+    CallType('RES', 'Rescue', 'Rescue'),
+    CallType('RR', 'Rope Rescue', 'Rescue'),
+    CallType('SC', 'Structural Collapse', 'Rescue'),
+    CallType('TR', 'Technical Rescue', 'Rescue'),
+    CallType('TNR', 'Trench Rescue', 'Rescue'),
+    CallType('USAR', 'Urban Search and Rescue', 'Rescue'),
+    CallType('VS', 'Vessel Sinking', 'Rescue'),
+    CallType('WR', 'Water Rescue', 'Rescue'),
+    
+    # Vehicle
+    CallType('TCP', 'Collision Involving Pedestrian', 'Vehicle'),
+    CallType('TCS', 'Collision Involving Structure', 'Vehicle'),
+    CallType('TCT', 'Collision Involving Train', 'Vehicle'),
+    CallType('TCE', 'Expanded Traffic Collision', 'Vehicle'),
+    CallType('RTE', 'Railroad/Train Emergency', 'Vehicle'),
+    CallType('TC', 'Traffic Collision', 'Vehicle'),
+    
+    # Wires
+    CallType('PLE', 'Powerline Emergency', 'Wires'),
+    CallType('WA', 'Wires Arching', 'Wires'),
+    CallType('WD', 'Wires Down', 'Wires'),
+    CallType('WDA', 'Wires Down/Arcing', 'Wires'),
+    
+    # Other
+    CallType('BP', 'Burn Permit', 'Other'),
+    CallType('CA', 'Community Activity', 'Other'),
+    CallType('FW', 'Fire Watch', 'Other'),
+    CallType('MC', 'Move-up/Cover', 'Other'),
+    CallType('NO', 'Notification', 'Other'),
+    CallType('STBY', 'Standby', 'Other'),
+    CallType('TEST', 'Test', 'Other'),
+    CallType('TRNG', 'Training', 'Other'),
+    
+    # Alert
+    CallType('NEWS', 'News', 'Alert'),
+    CallType('CERT', 'CERT', 'Alert'),
+    CallType('DISASTER', 'Disaster', 'Alert'),
+    
+    # Unknown
+    CallType('UNK', 'Unknown Call Type', 'Unknown'),
+]
+
+# Create lookup dictionary for fast access
+CALL_TYPE_LOOKUP: Dict[str, CallType] = {call_type.id: call_type for call_type in CALL_TYPES}
+
+def call_type_from_code(call_type_code: str) -> CallType:
+    """Get call type information from code, returns Unknown if not found."""
+    return CALL_TYPE_LOOKUP.get(call_type_code, CallType('UNK', 'Unknown Call Type', 'Unknown'))
+
+def call_types_for_categories(categories: List[CallTypeCategory]) -> List[CallType]:
+    """Get all call types that belong to the specified categories."""
+    return [call_type for call_type in CALL_TYPES if call_type.category in categories]
 
 class PulsePointCollector:
     def __init__(self):
@@ -269,34 +443,27 @@ class PulsePointCollector:
             return decrypted_data
 
         except json.JSONDecodeError as e:
-            error_pos_context = 200 # Characters before and after error position
-            start_err_idx = max(0, e.pos - error_pos_context)
-            end_err_idx = min(len(json_string), e.pos + error_pos_context)
-            contextual_error_string = json_string[start_err_idx:end_err_idx]
-            self.logger.error(f"Error decoding JSON from decrypted PulsePoint data: {str(e)} at pos {e.pos}")
-            self.logger.debug(f"Problematic decrypted string segment (around pos {e.pos}, len {len(json_string)}): ...{contextual_error_string}...")
-            
-            # Attempt to handle "Extra data" error by parsing up to e.pos
+            # Attempt to handle "Extra data" error by parsing up to e.pos (common with PulsePoint responses)
             if "Extra data" in e.msg and e.pos > 0:
-                self.logger.warning(f"JSONDecodeError 'Extra data' at pos {e.pos}. Attempting to parse up to this position.")
+                self.logger.warning(f"Extra data detected in JSON response at pos {e.pos}. Attempting to parse valid portion.")
                 json_string_trimmed = json_string[:e.pos]
                 try:
                     parsed_trimmed_intermediate = json.loads(json_string_trimmed)
-                    self.logger.info(f"Successfully parsed trimmed JSON string up to pos {e.pos}. Result type: {type(parsed_trimmed_intermediate)}")
+                    self.logger.debug(f"Successfully parsed trimmed JSON string up to pos {e.pos}. Result type: {type(parsed_trimmed_intermediate)}")
 
                     final_data_to_check = parsed_trimmed_intermediate
                     if isinstance(parsed_trimmed_intermediate, str):
-                        self.logger.info("Trimmed JSON parse resulted in a string, attempting a second parse on this string.")
+                        self.logger.debug("Trimmed JSON parse resulted in a string, attempting a second parse on this string.")
                         try:
                             final_data_to_check = json.loads(parsed_trimmed_intermediate) # Second parse
-                            self.logger.info(f"Second parse of trimmed string successful. Result type: {type(final_data_to_check)}")
+                            self.logger.debug(f"Second parse of trimmed string successful. Result type: {type(final_data_to_check)}")
                         except json.JSONDecodeError as e_double_trimmed:
-                            self.logger.error(f"Second JSON parse of trimmed string failed: {str(e_double_trimmed)}")
+                            self.logger.warning(f"Second JSON parse of trimmed string failed: {str(e_double_trimmed)}")
                             self.logger.debug(f"Trimmed string from first parse (that failed second parse, first 500 chars): {parsed_trimmed_intermediate[:500]}")
                             # Fall through to check type of final_data_to_check, which will be the string if second parse fails
                     
                     if isinstance(final_data_to_check, dict) and final_data_to_check:
-                        self.logger.info("Successfully parsed trimmed and potentially double-parsed data as a non-empty dictionary.")
+                        self.logger.debug("Successfully recovered data from response with extra content.")
                         return final_data_to_check
                     elif isinstance(final_data_to_check, dict): # It's a dict but empty
                         self.logger.warning("Trimmed and potentially double-parsed JSON data resulted in an empty dictionary.")
@@ -304,7 +471,15 @@ class PulsePointCollector:
                     else: 
                         self.logger.warning(f"Trimmed and potentially double-parsed JSON data is not a dictionary (type: {type(final_data_to_check)}).")
                 except json.JSONDecodeError as e2:
-                    self.logger.error(f"Failed to parse even the trimmed JSON string (up to pos {e.pos}): {str(e2)}")
+                    self.logger.warning(f"Failed to parse even the trimmed JSON string (up to pos {e.pos}): {str(e2)}")
+            else:
+                # For non-"Extra data" errors, log as error with full context
+                error_pos_context = 200 # Characters before and after error position
+                start_err_idx = max(0, e.pos - error_pos_context)
+                end_err_idx = min(len(json_string), e.pos + error_pos_context)
+                contextual_error_string = json_string[start_err_idx:end_err_idx]
+                self.logger.error(f"Error decoding JSON from decrypted PulsePoint data: {str(e)} at pos {e.pos}")
+                self.logger.debug(f"Problematic decrypted string segment (around pos {e.pos}, len {len(json_string)}): ...{contextual_error_string}...")
             return {}
         except Exception as e:
             self.logger.error(f"Error decrypting PulsePoint data: {str(e)}")
@@ -325,6 +500,31 @@ class PulsePointCollector:
         all_agencies_processed_data: Dict[str, Dict] = {}
         collection_start_time = time.monotonic()
 
+        # Create a session to maintain cookies and establish context
+        session = requests.Session()
+        
+        # First, visit the main site to establish a session like a browser would
+        try:
+            self.logger.debug("Establishing session by visiting main PulsePoint site...")
+            main_site_response = session.get("https://web.pulsepoint.org/", 
+                                            headers={
+                                                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                                                "accept-language": "en-US,en;q=0.9",
+                                                "sec-ch-ua": '"Chromium";v="137", "Not/A)Brand";v="24"',
+                                                "sec-ch-ua-mobile": "?0",
+                                                "sec-ch-ua-platform": '"macOS"',
+                                                "sec-fetch-dest": "document",
+                                                "sec-fetch-mode": "navigate",
+                                                "sec-fetch-site": "none",
+                                                "upgrade-insecure-requests": "1",
+                                                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+                                            }, 
+                                            timeout=REQUEST_TIMEOUT)
+            main_site_response.raise_for_status()
+            self.logger.debug("Successfully established session with main site")
+        except Exception as e:
+            self.logger.warning(f"Failed to establish session with main site: {str(e)}. Continuing anyway...")
+
         for agency_config in AGENCIES:
             agency_id = agency_config["id"]
             agency_name = agency_config["name"]
@@ -334,7 +534,7 @@ class PulsePointCollector:
             
             request_start_time = time.monotonic()
             try:
-                response = requests.get(url, headers=PULSEPOINT_HEADERS, timeout=REQUEST_TIMEOUT)
+                response = session.get(url, headers=PULSEPOINT_HEADERS, timeout=REQUEST_TIMEOUT)
                 response.raise_for_status()
                 
                 # Attempt to parse JSON, but prepare for it to potentially be a string or other non-dict
@@ -379,6 +579,9 @@ class PulsePointCollector:
                     "status": decrypted_agency_data.get("status", {})
                 }
                 self.logger.debug(f"Normalized {len(normalized_active)} active and {len(normalized_recent)} recent incidents for {agency_name} ({agency_id})")
+                
+                # Add small delay between agency requests to be respectful to the API
+                time.sleep(0.5)
 
             except requests.exceptions.RequestException as e:
                 self.logger.error(f"Error fetching incident data for {agency_name} ({agency_id}) from {url}: {str(e)}")
@@ -389,6 +592,9 @@ class PulsePointCollector:
             except Exception as e:
                 self.logger.error(f"An unexpected error occurred during fetching data for {agency_name} ({agency_id}): {str(e)}")
                 continue # Skip to the next agency
+        
+        # Clean up session
+        session.close()
         
         total_collection_duration = time.monotonic() - collection_start_time
         if not all_agencies_processed_data:
@@ -401,105 +607,7 @@ class PulsePointCollector:
     @track_processing
     def _normalize_incidents(self, incidents: List[Dict], agency_id: str) -> List[Dict]:
         """Normalize incident data to a consistent format."""
-        # Mapping of PulsePoint codes to human-readable values
-        INCIDENT_TYPE_MAP = {
-            "AA": "Auto Aid",
-            "MU": "Mutual Aid",
-            "ST": "Strike Team/Task Force",
-            "AC": "Aircraft Crash",
-            "AE": "Aircraft Emergency",
-            "AES": "Aircraft Emergency Standby",
-            "LZ": "Landing Zone",
-            "AED": "AED Alarm",
-            "OA": "Alarm",
-            "CMA": "Carbon Monoxide",
-            "FA": "Fire Alarm",
-            "MA": "Manual Alarm",
-            "SD": "Smoke Detector",
-            "TRBL": "Trouble Alarm",
-            "WFA": "Waterflow Alarm",
-            "FL": "Flooding",
-            "LR": "Ladder Request",
-            "LA": "Lift Assist",
-            "PA": "Police Assist",
-            "PS": "Public Service",
-            "SH": "Sheared Hydrant",
-            "EX": "Explosion",
-            "PE": "Pipeline Emergency",
-            "TE": "Transformer Explosion",
-            "AF": "Appliance Fire",
-            "CHIM": "Chimney Fire",
-            "CF": "Commercial Fire",
-            "WSF": "Confirmed Structure Fire",
-            "WVEG": "Confirmed Vegetation Fire",
-            "CB": "Controlled Burn/Prescribed Fire",
-            "ELF": "Electrical Fire",
-            "EF": "Extinguished Fire",
-            "FIRE": "Fire",
-            "FULL": "Full Assignment",
-            "IF": "Illegal Fire",
-            "MF": "Marine Fire",
-            "OF": "Outside Fire",
-            "PF": "Pole Fire",
-            "GF": "Refuse/Garbage Fire",
-            "RF": "Residential Fire",
-            "SF": "Structure Fire",
-            "VEG": "Vegetation Fire",
-            "VF": "Vehicle Fire",
-            "WCF": "Working Commercial Fire",
-            "WRF": "Working Residential Fire",
-            "BT": "Bomb Threat",
-            "EE": "Electrical Emergency",
-            "EM": "Emergency",
-            "ER": "Emergency Response",
-            "GAS": "Gas Leak",
-            "HC": "Hazardous Condition",
-            "HMR": "Hazmat Response",
-            "TD": "Tree Down",
-            "WE": "Water Emergency",
-            "AI": "Arson Investigation",
-            "HMI": "Hazmat Investigation",
-            "INV": "Investigation",
-            "OI": "Odor Investigation",
-            "SI": "Smoke Investigation",
-            "LO": "Lockout",
-            "CL": "Commercial Lockout",
-            "RL": "Residential Lockout",
-            "VL": "Vehicle Lockout",
-            "IFT": "Interfacility Transfer",
-            "ME": "Medical Emergency",
-            "MCI": "Multi Casualty",
-            "EQ": "Earthquake",
-            "FLW": "Flood Warning",
-            "TOW": "Tornado Warning",
-            "TSW": "Tsunami Warning",
-            "CA": "Community Activity",
-            "FW": "Fire Watch",
-            "NO": "Notification",
-            "STBY": "Standby",
-            "TEST": "Test",
-            "TRNG": "Training",
-            "UNK": "Unknown",
-            "AR": "Animal Rescue",
-            "CR": "Cliff Rescue",
-            "CSR": "Confined Space",
-            "ELR": "Elevator Rescue",
-            "RES": "Rescue",
-            "RR": "Rope Rescue",
-            "TR": "Technical Rescue",
-            "TNR": "Trench Rescue",
-            "USAR": "Urban Search and Rescue",
-            "VS": "Vessel Sinking",
-            "WR": "Water Rescue",
-            "TCE": "Expanded Traffic Collision",
-            "RTE": "Railroad/Train Emergency",
-            "TC": "Traffic Collision",
-            "TCS": "Traffic Collision Involving Structure",
-            "TCT": "Traffic Collision Involving Train",
-            "WA": "Wires Arcing",
-            "WD": "Wires Down"
-        }
-        
+        # Dispatch status mapping
         DISPATCH_STATUS_MAP = {
             "DP": "Dispatched",
             "AK": "Acknowledged",
@@ -524,12 +632,12 @@ class PulsePointCollector:
                 # Add agency ID
                 incident["agencyId"] = agency_id
                 
-                # Map incident type and dispatch status to human-readable values
+                # Map incident type using the comprehensive call type system
                 if "PulsePointIncidentCallType" in incident:
-                    incident["incident_type"] = INCIDENT_TYPE_MAP.get(
-                        incident["PulsePointIncidentCallType"],
-                        incident["PulsePointIncidentCallType"]
-                    )
+                    call_type = call_type_from_code(incident["PulsePointIncidentCallType"])
+                    incident["incident_type"] = call_type.description
+                    incident["incident_category"] = call_type.category
+                    incident["incident_code"] = call_type.id
                 
                 # Map unit dispatch statuses
                 if "Unit" in incident and isinstance(incident["Unit"], list):

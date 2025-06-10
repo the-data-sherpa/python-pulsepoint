@@ -37,4 +37,4 @@ def generate_waze_feed(incidents: List[Dict], output_path: str = "waze_feed.json
     feed = {"alerts": alerts}
     with open(output_path, "w") as f:
         json.dump(feed, f, indent=2)
-    print(f"Waze CCP feed written to {output_path} with {len(alerts)} alerts.") 
+    #print(f"Waze CCP feed written to {output_path} with {len(alerts)} alerts.") 
